@@ -274,7 +274,7 @@ async function run() {
     const startDate = req.query.startDate;
     const endDate = req.query.endDate;
 
-    //console.log(startDate, endDate);
+    console.log(startDate, endDate);
 
     if(startDate && endDate){
 
@@ -325,7 +325,7 @@ async function run() {
         parcel_weight: data.parcel_weight, 
         cost: data.cost, 
         delivery_address: data.delivery_address, 
-        requestedDeliveryDate: data.requestedDeliveryDate, 
+        requestedDeliveryDate: new Date(data.requestedDeliveryDate),
         latitude: data.latitude, 
         longitude: data.longitude,
         status: data.status,

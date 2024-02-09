@@ -62,8 +62,8 @@ async function run() {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.USER,
         pass: process.env.PASS,
@@ -78,13 +78,27 @@ async function run() {
     // }
 
     //verify connection
-    transporter.verify((error, success) => {
-      if (error) {
-        console.log(error)
-      } else {
-        console.log('Server is ready to take our emails', success)
-      }
-    })
+
+    await new Promise((resolve, reject) => {
+      // verify connection configuration
+      transporter.verify(function (error, success) {
+          if (error) {
+              console.log(error);
+              reject(error);
+          } else {
+              console.log("Server is ready to take our messages");
+              resolve(success);
+          }
+      });
+  });
+
+    // transporter.verify((error, success) => {
+    //   if (error) {
+    //     console.log(error)
+    //   } else {
+    //     console.log('Server is ready to take our emails', success)
+    //   }
+    // })
 
     const mailBody = {
       from: {

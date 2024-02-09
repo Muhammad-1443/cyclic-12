@@ -99,10 +99,7 @@ async function run() {
     // })
 
     const mailBody = {
-      from: {
-        name: 'FAST',
-        address: process.env.USER,
-      },
+      from: process.env.USER,
       to: req.body.email,
       subject: 'Payment Confirmation',
       html: `<p>Dear ${req.body.name} Sir/Madam,<br>You have paid ${req.body.price}. Your Transaction id is: ${req.body.transactionId}. Thanks for having with us.</p>.`,

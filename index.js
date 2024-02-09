@@ -6,6 +6,7 @@ const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 const port = process.env.PORT || 5000;
+const nodemailer = require('nodemailer')
 
 // middleware
 app.use(cors());
@@ -29,13 +30,14 @@ async function run() {
 
    const userCollection = client.db('Fast').collection('users');
    const parcelCollection = client.db('Fast').collection('parcels');
+   const paymentCollection = client.db('Fast').collection('payments');
    const reviewCollection = client.db('Fast').collection('reviews');
 
    // payment intent
    app.post('/create-payment-intent', async (req, res) => {
     const { price } = req.body;
     const amount = parseInt(price * 100);
-    console.log(amount, 'amount inside the intent')
+    //console.log(amount, 'amount inside the intent')
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount,
@@ -48,10 +50,65 @@ async function run() {
     })
   });
 
+  app.post('/payments', async (req, res) => {
+    const newPayment = req.body;
+  //  console.log(newPayment);
+    const result = await paymentCollection.insertOne(newPayment);
+    res.send(result);
+
+    // Send email
+
+    //Create a transporter
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: process.env.USER,
+        pass: process.env.PASS,
+      },
+    })
+
+    // const mailOptions = {
+    //   from: process.env.USER,
+    //   to: req.body.email,
+    //   subject: 'Payment Confirmation',
+    //   html: `<p>You have paid ${req.body.cost}. Your Transaction id is: ${req.body.transactionId}</p>.`,
+    // }
+
+    //verify connection
+    transporter.verify((error, success) => {
+      if (error) {
+        console.log(error)
+      } else {
+        console.log('Server is ready to take our emails', success)
+      }
+    })
+
+    const mailBody = {
+      from: {
+        name: 'FAST',
+        address: process.env.USER,
+      },
+      to: req.body.email,
+      subject: 'Payment Confirmation',
+      html: `<p>Dear ${req.body.name} Sir/Madam,<br>You have paid ${req.body.price}. Your Transaction id is: ${req.body.transactionId}. Thanks for having with us.</p>.`,
+    }
+
+    transporter.sendMail(mailBody, (error, info) => {
+      if (error) {
+        console.log(error)
+      } else {
+        console.log('Email sent: ' + info.response)
+      }
+    })
+  })
+
    // review related api
    app.post('/reviews', async (req, res) => {
     const newReview = req.body;
-    console.log(newReview);
+   // console.log(newReview);
     const result = await reviewCollection.insertOne(newReview);
     res.send(result);
   })
@@ -62,17 +119,17 @@ async function run() {
 
       const delivery_men_id = req.query.delivery_men_id;
 
-      console.log(delivery_men_id);
+      //console.log(delivery_men_id);
 
       if(delivery_men_id) {
           queryObj.delivery_men_id = delivery_men_id;
       }
     
-      console.log(queryObj);
+      //console.log(queryObj);
 
       const cursor = reviewCollection.find(queryObj);
       const result = await cursor.toArray();
-      console.log(result);
+      //console.log(result);
       res.send(result);
     
     })
@@ -80,7 +137,7 @@ async function run() {
    // user related api
    app.post('/users', async (req, res) => {
     const user = req.body;
-    console.log(user);
+   // console.log(user);
     
     const query = {email: user.email};
     const existingUser = await userCollection.findOne(query);
@@ -108,7 +165,7 @@ async function run() {
       queryObj.role = role;
     }
 
-    console.log(queryObj);
+  //  console.log(queryObj);
 
     const cursor = userCollection.find(queryObj);
     const result = (await cursor.toArray());
@@ -125,7 +182,7 @@ async function run() {
       queryObj.status = status;
     }
 
-    console.log(queryObj);
+   // console.log(queryObj);
 
     const cursor = parcelCollection.find(queryObj);
     const result = (await cursor.toArray());
@@ -152,7 +209,7 @@ async function run() {
       }
     ]).toArray();
 
-    console.log(result);
+  //  console.log(result);
 
     res.send(result);
   })
@@ -184,12 +241,12 @@ async function run() {
       sortObj[sortf] = sorto;
     }
 
-    console.log(sortObj);
+   // console.log(sortObj);
 
     const page = parseInt(req.query.page);
     const size = parseInt(req.query.size);
 
-    console.log('pagination query', page, size);
+   // console.log('pagination query', page, size);
 
     if(size){
       const result = await userCollection.find(queryObj)
@@ -239,7 +296,7 @@ async function run() {
     const newReview = req.body;
     newReview.requestedDeliveryDate = new Date(req.body.requestedDeliveryDate);
    // console.log(newReview);
-    console.log(req.body.requestedDeliveryDate)
+  //  console.log(req.body.requestedDeliveryDate)
     const result = await parcelCollection.insertOne(newReview);
     res.send(result);
   })
@@ -274,7 +331,7 @@ async function run() {
     const startDate = req.query.startDate;
     const endDate = req.query.endDate;
 
-    console.log(startDate, endDate);
+    //console.log(startDate, endDate);
 
     if(startDate && endDate){
 
@@ -289,22 +346,22 @@ async function run() {
       }}
     }
     
-    console.log(queryObj);
+   // console.log(queryObj);
 
     const cursor = parcelCollection.find(queryObj);
     const result = await cursor.toArray();
-    console.log(result);
+   // console.log(result);
     res.send(result); 
   })
 
   app.get("/parcels/:id", async (req, res) => {
     const id = req.params.id;
-    console.log("id", id);
+  //  console.log("id", id);
     const query = {
       _id: new ObjectId(id),
     };
     const result = await parcelCollection.findOne(query);
-    console.log(result);
+  //  console.log(result);
     res.send(result);
   });
 

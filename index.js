@@ -87,19 +87,33 @@ async function run() {
     })
 
     const mailBody = {
-      from: process.env.USER,
+      from: {
+        name: 'FAST',
+        address: process.env.USER,
+      },
       to: req.body.email,
       subject: 'Payment Confirmation',
       html: `<p>Dear ${req.body.name} Sir/Madam,<br>You have paid ${req.body.price}. Your Transaction id is: ${req.body.transactionId}. Thanks for having with us.</p>.`,
     }
 
-    transporter.sendMail(mailBody, (error, info) => {
-      if (error) {
-        console.log(error)
-      } else {
-        console.log('Email sent: ' + info.response)
-      }
-    })
+    await new Promise((resolve, reject) => {
+      transporter.sendMail(mailBody, (err, info) => {
+        if (err) {
+          console.error(err);
+          reject(err);
+        } else {
+          resolve(info);
+        }
+      });
+    });
+
+    // transporter.sendMail(mailBody, (error, info) => {
+    //   if (error) {
+    //     console.log(error)
+    //   } else {
+    //     console.log('Email sent: ' + info.response)
+    //   }
+    // })
   })
 
    // review related api
